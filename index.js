@@ -172,9 +172,8 @@ app.post(USER_BASE_URL, async (req, res) => {
     ];
     let [nextId] = await user.aggregate(nextIdPipeline)
     if (nextId === null || nextId === undefined){
-      nextId = 1;
+      nextId = {id: 1}
     }
-
     user.insertMany({
       id: nextId.id,
       userName: userName
