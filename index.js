@@ -1,8 +1,12 @@
 const express = require('express');
 const mongoose = require('mongoose');
+const cors = require('cors');
 
 const app = express();
 const port = 3000;
+
+// Allow all cross-origin requests
+app.use(cors());
 
 // Middleware to parse JSON bodies
 app.use(express.json());
@@ -20,26 +24,6 @@ mongoose.connect('mongodb://localhost:27017/queueDB', {
 })
 .catch((error) => {
   console.error('Error connecting to MongoDB:', error);
-});
-
-// Define a basic schema and model
-const Schema = mongoose.Schema;
-const ExampleSchema = new Schema({
-  name: String,
-  age: Number,
-});
-
-const ExampleModel = mongoose.model('Example', ExampleSchema);
-
-// Example route to create a new document
-app.get('/create', async (req, res) => {
-  try {
-    const example = new ExampleModel({ name: 'John', age: 30 });
-    await example.save();
-    res.send('Document created successfully');
-  } catch (error) {
-    res.status(500).send('Error creating document');
-  }
 });
 
 
@@ -73,7 +57,11 @@ const WAITING_LIST = '/waiting'
 app.get(BUSINESS_BASE_URL, async (req, res) => {
   try{
     const business_list = await business.find()
-    res.status(200).json(business_list)
+    if(business_list === null || business_list === undefined || business_list.length === 0){
+      res.status(204).json([])
+    }else{
+      res.status(200).json(business_list)
+    }
   }catch(e){
     res.status(500).json({error: `Erorr catched is "${e}"`})
   }
@@ -81,42 +69,84 @@ app.get(BUSINESS_BASE_URL, async (req, res) => {
 
 app.post(BUSINESS_BASE_URL, async (req, res) => {
   try{
-    
-  }catch(e){
+    const {name} = req.body
+    const nextIdPipeline = [
+      {
+        $sort: { id: -1 }
+      },
+      {
+        $limit: 1
+      },
+      {
+        $project: {
+          _id: 0,
+          id: { $add: ["$id", 1] }
+        }
+      }
+    ];
+    let [nextId] = await business.aggregate(nextIdPipeline)
+    if(nextId === null || nextId === undefined) nextId = {id: 1} ;
 
+    business.insertMany({
+      name: name,
+      id: nextId.id
+    })
+    res.status(201).json(await business.find({id: nextId.id}))
+  }catch(e){
+    console.error(e);
+    res.status(500).json({ error: "Failed to create business" });
   }
-  res.status(501).json({message: "Working"})
 })
 
 app.get(BUSINESS_BASE_URL + '/:id', async (req, res) => {
-  const id = req.params.id;
   try{
-    
-  }catch(e){
+    const id = req.params.id;
 
+    const businessFound = await business.find({id: id})
+    
+    if (!businessFound) {
+      // If business is not found, return a 404 Not Found response
+      return res.status(404).json({ message: 'Business not found' });
+    }
+
+    // If business is found, return the business data
+    res.status(200).json(businessFound);
+  }catch(e){
+    console.error(e);
+    res.status(500).json({ error: "Failed to get business" });
   }
-  res.status(501).json({message: "Working"})
 })
 
-app.put(BUSINESS_BASE_URL + '/:id', async (req, res) => {
+// Update a business by ID
+app.put(`${BUSINESS_BASE_URL}/:id`, async (req, res) => {
   const id = req.params.id;
-  try{
-    
-  }catch(e){
-
+  const { name } = req.body;
+  try {
+    const businessFound = await business.find({id: id})
+    if (!businessFound) {
+      // If business is not found, return a 404 Not Found response
+      return res.status(404).json({ message: 'Business not found' });
+    }
+    // Find and update the business by ID
+    await business.updateOne({ id: id }, { name: name });
+    res.status(200).json({ message: 'Business updated successfully' });
+  } catch (error) {
+    res.status(500).json({ message: `Error updating business: ${error.message}` });
   }
-  res.status(501).json({message: "Working"})
-})
+});
 
-app.patch(BUSINESS_BASE_URL + '/:id', async (req, res) => {
+// Delete a business by ID
+app.delete(`${BUSINESS_BASE_URL}/:id`, async (req, res) => {
   const id = req.params.id;
-  try{
-    
-  }catch(e){
-
+  try {
+    // Find and delete the business by ID
+    await business.deleteOne({ id: id });
+    res.status(200).json({ message: 'Business deleted successfully' });
+  } catch (error) {
+    res.status(500).json({ message: `Error deleting business: ${error.message}` });
   }
-  res.status(501).json({message: "Working"})
-})
+});
+
 
 // Waiting lists
 
@@ -202,6 +232,31 @@ app.get(`${USER_BASE_URL}/:id`, async (req, res) => {
   } catch (error) {
     // If an error occurs, return a 500 Internal Server Error response
     res.status(500).json({ message: `Error: ${error.message}` });
+  }
+});
+
+// Delete a user by ID
+app.delete(`${USER_BASE_URL}/:id`, async (req, res) => {
+  const id = req.params.id;
+  try {
+    // Find and delete the user by ID
+    await user.deleteOne({ id: id });
+    res.status(200).json({ message: 'User deleted successfully' });
+  } catch (error) {
+    res.status(500).json({ message: `Error deleting user: ${error.message}` });
+  }
+});
+
+// Update a user by ID
+app.put(`${USER_BASE_URL}/:id`, async (req, res) => {
+  const id = req.params.id;
+  const { userName } = req.body;
+  try {
+    // Find and update the user by ID
+    await user.updateOne({ id: id }, { userName: userName });
+    res.status(200).json({ message: 'User updated successfully' });
+  } catch (error) {
+    res.status(500).json({ message: `Error updating user: ${error.message}` });
   }
 });
 
