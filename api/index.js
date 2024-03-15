@@ -24,7 +24,16 @@ app.use(express.static(path.join(__dirname, 'public')));
 ****************************************/
 
 app.get('/test', async (req, res) => {
-  res.status(501).json({ message: "Working" })
+  const acceptHeader = req.get('Accept');
+
+  // Check the accept header
+  if (acceptHeader.includes('text/html')) {
+    // Return HTML response
+    res.status(200).send('<h1>This is HTML content</h1>');
+  } else {
+    // Return plain text response
+    res.status(200).send('This is plain text content');
+  }
 })
 
 /****************************************
