@@ -1,6 +1,6 @@
 const express = require('express');
-//const mongoose = require('mongoose');
 const cors = require('cors');
+const path = require('path'); // Import path module
 
 const app = express();
 const port = 3000;
@@ -14,6 +14,9 @@ app.use(express.json());
 // Middleware to parse URL-encoded bodies
 app.use(express.urlencoded({ extended: true }));
 
+// Serve static files from the public directory
+app.use(express.static(path.join(__dirname, 'public')));
+
 // -------------------------------------------- ENDPOINTS --------------------------------------------
 
 /****************************************
@@ -21,16 +24,15 @@ app.use(express.urlencoded({ extended: true }));
 ****************************************/
 
 app.get('/test', async (req, res) => {
-  res.status(501).json({message: "Working"})
+  res.status(501).json({ message: "Working" })
 })
 
 /****************************************
  * Users
 ****************************************/
 
-
 app.get('/helloworld', async (req, res) => {
-  res.status(200).json({message: "Hello world"})
+  res.status(200).json({ message: "Hello world" })
 })
 
 app.listen(port, () => {
