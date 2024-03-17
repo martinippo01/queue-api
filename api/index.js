@@ -55,6 +55,14 @@ app.get('/players', async (req, res) => {
       )
       .on('end', () => {
         const paginatedResults = results.slice(startIdx, endIdx);
+        if(paginatedResults.length === 0){
+          console.log("empty")
+          if(acceptHeader.includes('text/html'))
+            res.status(404).send('<h1>Not Found</h1>');
+          else
+            res.status(404).send({message: 'Not Found'});
+        }else{
+          
         //res.json(paginatedResults); // Send the parsed CSV data as JSON response
         // Check the accept header
         if (acceptHeader.includes('text/html')) {
@@ -65,7 +73,7 @@ app.get('/players', async (req, res) => {
           <head>
             <meta charset="UTF-8">
             <meta name="viewport" content="width=device-width, initial-scale=1.0">
-            <title>Dynamic HTML</title>
+            <title>Premier League Players</title>
           </head>
           <body>
             <h1>Premier League Players</h1>
@@ -87,6 +95,7 @@ app.get('/players', async (req, res) => {
         } else {
           // Return plain text response
           res.status(200).send(paginatedResults);
+        }
         }
       });
     }catch(e){
