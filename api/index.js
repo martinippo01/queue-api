@@ -1,6 +1,9 @@
 const express = require('express');
 const cors = require('cors');
 const path = require('path'); // Import path module
+const csvParser = require('csv-parser');
+const fs = require('fs');
+
 
 const app = express();
 const port = 3000;
@@ -23,17 +26,72 @@ app.use(express.static(path.join(__dirname, 'public')));
  * Business
 ****************************************/
 
-app.get('/test', async (req, res) => {
-  const acceptHeader = req.get('Accept');
+app.get('/players', async (req, res) => {
+  try{
+    const acceptHeader = req.get('Accept');
+    const page = parseInt(req.query.page) || 1; // Default to page 1 if not specified
+    const limit = parseInt(req.query.limit) || 10; // Default to 10 items per page if not specified
+    const startIdx = (page - 1) * limit;
+    const endIdx = page * limit;
 
-  // Check the accept header
-  if (acceptHeader.includes('text/html')) {
-    // Return HTML response
-    res.status(200).send('<h1>This is HTML content</h1>');
-  } else {
-    // Return plain text response
-    res.status(200).send('This is plain text content');
-  }
+    const results = []
+    const columns_to_show = ['full_name', 'age', 'Current Club', 'nationality', 'position']
+
+    // Path to your CSV file
+    const csvFilePath = './public/england-premier-league-players-2018-to-2019-stats.csv';
+
+    // Read the CSV file
+    fs.createReadStream(csvFilePath)
+      .pipe(csvParser())
+      .on('data', (data) => {
+        const filteredData = {};
+        columns_to_show.forEach(column => {
+          if(data[column]){
+            filteredData[column] = data[column];
+          }
+        });
+        results.push(filteredData)
+      }
+      )
+      .on('end', () => {
+        const paginatedResults = results.slice(startIdx, endIdx);
+        //res.json(paginatedResults); // Send the parsed CSV data as JSON response
+        // Check the accept header
+        if (acceptHeader.includes('text/html')) {
+          // Return HTML response
+          let base_html = `
+          <!DOCTYPE html>
+          <html lang="en">
+          <head>
+            <meta charset="UTF-8">
+            <meta name="viewport" content="width=device-width, initial-scale=1.0">
+            <title>Dynamic HTML</title>
+          </head>
+          <body>
+            <h1>Premier League Players</h1>
+          `
+          paginatedResults.forEach(
+            (player_data) => {
+              base_html += `<h3>${player_data.full_name}</h3>
+                <ul>
+                  <li>Current Club: ${player_data['Current Club']}</li>
+                  <li>Nationality: ${player_data.nationality}</li>
+                  <li>Position: ${player_data.position}</li>
+                  <li>Age: ${player_data.age}</li>
+                </ul>
+              <br>`
+            }
+          );
+          base_html += `</body></html>`
+          res.status(200).send(base_html);
+        } else {
+          // Return plain text response
+          res.status(200).send(paginatedResults);
+        }
+      });
+    }catch(e){
+      res.status(500).send({'error': 'Internal server error'})
+    }
 })
 
 /****************************************

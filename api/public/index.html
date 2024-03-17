@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>API Documentation</title>
+    <title>Premier League Players API Documentation</title>
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -29,16 +29,28 @@
     </style>
 </head>
 <body>
-    <h1>API Documentation</h1>
+    <h1>Premier League Players API Documentation</h1>
 
     <div class="endpoint">
-        <h2>GET /test</h2>
-        <p>Returns a JSON response indicating that the API is working.</p>
+        <h2>GET /players</h2>
+        <p>Returns a list of Premier League players.</p>
+        <p>Query Parameters:</p>
+        <ul>
+            <li><strong>page</strong> (optional): Specifies the page number for pagination. Default is 1.</li>
+            <li><strong>limit</strong> (optional): Specifies the number of items per page. Default is 10.</li>
+        </ul>
         <pre>
             <code>
-                {
-                    "message": "Working"
-                }
+                [
+                    {
+                        "full_name": "Player Name",
+                        "age": "Player Age",
+                        "Current Club": "Player Club",
+                        "nationality": "Player Nationality",
+                        "position": "Player Position"
+                    },
+                    ...
+                ]
             </code>
         </pre>
     </div>
