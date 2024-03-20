@@ -57,7 +57,7 @@ app.get('/players', async (req, res) => {
         const paginatedResults = results.slice(startIdx, endIdx);
         if(paginatedResults.length === 0){
           console.log("empty")
-          if(acceptHeader.includes('text/html'))
+          if(acceptHeader !== null && acceptHeader !== undefined && acceptHeader.includes('text/html'))
             res.status(404).send('<h1>Not Found</h1>');
           else
             res.status(404).send({message: 'Not Found'});
@@ -65,7 +65,7 @@ app.get('/players', async (req, res) => {
           
         //res.json(paginatedResults); // Send the parsed CSV data as JSON response
         // Check the accept header
-        if (acceptHeader.includes('text/html')) {
+        if (acceptHeader !== null && acceptHeader !== undefined && acceptHeader.includes('text/html')) {
           // Return HTML response
           let base_html = `
           <!DOCTYPE html>
