@@ -103,12 +103,23 @@ app.get('/players', async (req, res) => {
     }
 })
 
-/****************************************
- * Users
-****************************************/
 
-app.get('/helloworld', async (req, res) => {
-  res.status(200).json({ message: "Hello world" })
+app.get('/premier', async (req, res) =>{
+  // res.status(302).send({
+  //   'found': 'api.ippo.com.ar/players'
+  // })
+  res.redirect('/players');
+})
+
+
+app.get('/boom', async (req, res) => {
+  res.status(500).json({ message: "My bad" })
+})
+
+app.get('/players/salary', async (req, res) => {
+  res.status(403).send({
+    'error': 'Cannot access this information'
+  })
 })
 
 app.listen(port, () => {
